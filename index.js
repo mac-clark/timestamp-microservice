@@ -1,32 +1,46 @@
-// index.js
-// where your node app starts
+const express = require('express');
+const app = express();
 
-// init project
-var express = require('express');
-var app = express();
+const PORT = process.env.PORT || 3000;
 
-// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
-var cors = require('cors');
-app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
+// Middleware to enable CORS
+const cors = require('cors');
+app.use(cors({ optionsSuccessStatus: 200 }));
 
-// http://expressjs.com/en/starter/static-files.html
-app.use(express.static('public'));
-
-// http://expressjs.com/en/starter/basic-routing.html
+// Route to serve the index.html file
 app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
+// Route to handle timestamp requests
+app.get("/api/:date?", function (req, res) {
+  const { date } = req.params;
 
-// your first API endpoint... 
-app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+  // Function to validate date
+  const isValidDate = (dateString) => {
+    return !isNaN(new Date(dateString).getTime());
+  };
+
+  // If date is not provided, return current time
+  if (!date) {
+    const currentTime = new Date();
+    res.json({ unix: currentTime.getTime(), utc: currentTime.toUTCString() });
+    return;
+  }
+
+  let inputDate = new Date(date);
+  
+  // If input date is invalid, return error
+  if (!isValidDate(date)) {
+    res.json({ error: "Invalid Date" });
+    return;
+  }
+
+  // Return timestamp and UTC string
+  res.json({ unix: inputDate.getTime(), utc: inputDate.toUTCString() });
 });
 
-
-
-// Listen on port set in environment variable or default to 3000
-var listener = app.listen(process.env.PORT || 3000, function () {
-  console.log('Your app is listening on port ' + listener.address().port);
+// Start the server
+const listener = app.listen(PORT, function () {
+  console.log('Your app is listening on port ' + PORT);
 });
